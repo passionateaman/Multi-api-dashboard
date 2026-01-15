@@ -1,13 +1,258 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* ---------- Animated Aurora Background ---------- */
+.aurora-bg::before,
+.aurora-bg::after {
+  content: "";
+  position: fixed;
+  inset: -50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(168, 85, 247, 0.25),
+    transparent 40%
+  ),
+  radial-gradient(
+    circle at 70% 60%,
+    rgba(236, 72, 153, 0.25),
+    transparent 40%
+  ),
+  radial-gradient(
+    circle at 50% 80%,
+    rgba(59, 130, 246, 0.2),
+    transparent 45%
+  );
+  animation: auroraMove 30s linear infinite;
+  z-index: -1;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+.aurora-bg::after {
+  animation-direction: reverse;
+  opacity: 0.8;
+}
+
+@keyframes auroraMove {
+  0% { transform: translate(0%, 0%) scale(1); }
+  50% { transform: translate(10%, -10%) scale(1.05); }
+  100% { transform: translate(0%, 0%) scale(1); }
+}
+/* ---------- Agent Scrollbar ---------- */
+.agent-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168,85,247,0.5) transparent;
+}
+
+.agent-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.agent-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.6),
+    rgba(236, 72, 153, 0.6)
+  );
+  border-radius: 999px;
+}
+
+.agent-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+/* ---- Subtle Noise Overlay ---- */
+.noise-bg {
+  position: relative;
+}
+
+.noise-bg::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+.vignette::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0,0,0,0) 40%,
+    rgba(0,0,0,0.45) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+.light-blob {
+  position: fixed;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.18;
+  animation: floatBlob 18s ease-in-out infinite;
+  z-index: 0;
+}
+
+.blob-purple { background: #a855f7; top: 10%; left: 5%; }
+.blob-pink { background: #ec4899; bottom: 15%; right: 10%; animation-delay: -6s; }
+
+@keyframes floatBlob {
+  0%,100% { transform: translate(0,0); }
+  50% { transform: translate(40px,-30px); }
+}
+
+.api-card:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 20px 40px rgba(0,0,0,0.4);
+  transform: translateY(-2px);
+}
+/* ---------- 3D Card Wrapper ---------- */
+.card-3d-wrapper {
+  perspective: 1200px;
+}
+
+/* ---------- API Card 3D Effect ---------- */
+.api-card {
+  transform-style: preserve-3d;
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+  will-change: transform;
+}
+
+
+.card-3d-wrapper:hover .api-card {
+  transform:
+    translateZ(22px)       
+    translateY(-6px)
+    rotateX(2deg)
+    rotateY(-2deg);
+}
+
+
+/* ---------- Glassmorphism Floating Orbs ---------- */
+
+.glass-orb {
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 1;
+
+  transform: translate3d(
+    calc(var(--orb-x, 0px) * var(--depth, 0.5)),
+    calc(var(--orb-y, 0px) * var(--depth, 0.5)),
+    0
+  );
+
+  transition: transform 0.35s ease-out;
+}
+
+.orb-purple {
+  --depth: 0.35;
+  width: 420px;
+  height: 420px;
+  background: #a855f7;
+  top: 10%;
+  left: 5%;
+}
+
+.orb-pink {
+  --depth: 0.6;
+  width: 360px;
+  height: 360px;
+  background: #ec4899;
+  bottom: 12%;
+  right: 8%;
+}
+
+.orb-blue {
+  --depth: 0.9;
+  width: 320px;
+  height: 320px;
+  background: #3b82f6;
+  top: 55%;
+  left: 65%;
+}
+
+@media (max-width: 768px) {
+  .glass-orb {
+    transform: none !important;
+  }
+}
+
+
+
+/* Individual color orbs */
+.orb-purple {
+  width: 420px;
+  height: 420px;
+  background: #a855f7;
+  top: 10%;
+  left: 5%;
+}
+
+.orb-pink {
+  width: 360px;
+  height: 360px;
+  background: #ec4899;
+  bottom: 12%;
+  right: 8%;
+}
+
+.orb-blue {
+  width: 320px;
+  height: 320px;
+  background: #3b82f6;
+  top: 55%;
+  left: 65%;
+}
+
+/* Add this to your global CSS file */
+.markdown-table h3 {
+  color: #c084fc;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.markdown-table strong {
+  color: #e9d5ff;
+}
+
+.markdown-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.markdown-table th,
+.markdown-table td {
+  border: 1px solid #4c1d95;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.markdown-table th {
+  background: linear-gradient(to right, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+  color: #e9d5ff;
+  font-weight: 600;
+}
+
+.markdown-table tr:hover {
+  background: rgba(168, 85, 247, 0.1);
+}
+
+/* Vega chart container styling */
+.vega-embed {
+  background: transparent !important;
+}
+
+.vega-embed .vega-actions {
+  background: rgba(30, 41, 59, 0.8) !important;
+  border: 1px solid #4c1d95 !important;
 }
