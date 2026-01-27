@@ -2,35 +2,34 @@ import React, { useState, useEffect} from 'react';
 import { Send, Loader2, TrendingUp, Sparkles } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
- 
+
 const API_ENDPOINTS = {
   api1: 'https://allan-hyperspatial-apogamically.ngrok-free.dev/chat',
   api2: 'https://osteitic-rosalina-nonmilitantly.ngrok-free.dev/api/run',  
-  api3: 'https://06b000c0f30a.ngrok-free.app/chat'  
+  api3: 'https://fc983e2035da.ngrok-free.app/'   
 };
- 
+
 const MultiAPIQueryApp = () => {
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState(null);
   const [vegaLoaded, setVegaLoaded] = useState(false);
   const [fullscreenSpec, setFullscreenSpec] = useState(null);
-  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [fullscreenTable, setFullscreenTable] = useState(null);
- 
+
   useEffect(() => {
     const loadVegaLibraries = async () => {
       if (window.vegaEmbed) {
         setVegaLoaded(true);
         return;
       }
- 
+
       const scripts = [
         'https://cdn.jsdelivr.net/npm/vega@5',
         'https://cdn.jsdelivr.net/npm/vega-lite@5',
         'https://cdn.jsdelivr.net/npm/vega-embed@6'
       ];
- 
+
       for (const src of scripts) {
         await new Promise((resolve, reject) => {
           const script = document.createElement('script');
@@ -42,17 +41,17 @@ const MultiAPIQueryApp = () => {
       }
       setVegaLoaded(true);
     };
- 
+
     loadVegaLibraries();
   }, []);
- 
+
   useEffect(() => {
     if (!fullscreenSpec || !window.vegaEmbed) return;
- 
+
     const el = document.getElementById('fullscreen-vega');
     if (!el) return;
     el.innerHTML = '';
- 
+
     window.vegaEmbed(
       '#fullscreen-vega',
       {
@@ -68,7 +67,7 @@ const MultiAPIQueryApp = () => {
       }
     ).catch(err => console.error('Fullscreen Vega error:', err));
   }, [fullscreenSpec, vegaLoaded]);
- 
+
   const calculateRelevancy = async (query, answer) => {
     try {
       const res = await fetch('http://localhost:4000/relevancy', {
@@ -82,16 +81,16 @@ const MultiAPIQueryApp = () => {
       return 0;
     }
   };
- 
+
   const normalizeApi2 = (raw) => {
     if (!raw) return raw;
     const out = { ...raw };
- 
+
     if (raw.summary_text) out.summary = raw.summary_text;
     if (!out.summary && raw.raw_output) {
       out.summary = raw.raw_output.summary_text || raw.raw_output.summary || out.summary;
     }
- 
+
     const buildTableFrom = (s) => {
       if (!s) return null;
       if (s.headers && s.rows) return { headers: s.headers, rows: s.rows };
@@ -114,27 +113,21 @@ const MultiAPIQueryApp = () => {
       if (typeof s === 'object' && s.sample_rows) return buildTableFrom(s.sample_rows);
       return null;
     };
- 
+
     if (!out.table) {
       let tableCandidate = null;
       if (raw.sample_rows) tableCandidate = buildTableFrom(raw.sample_rows);
       if (!tableCandidate && raw.raw_output) tableCandidate = buildTableFrom(raw.raw_output.sample_rows || raw.raw_output);
       if (tableCandidate) out.table = tableCandidate;
     }
- 
+
     if (raw.vega_spec) out.vega_spec = raw.vega_spec;
     if (raw.vegaSpec) out.vegaSpec = raw.vegaSpec;
-    
-    // For API2: extract image_url if present (direct URL from swagger)
-    if (raw.image_url) out.image_url = raw.image_url;
-    else if (raw.raw_output && raw.raw_output.image_url) out.image_url = raw.raw_output.image_url;
-    
-    // Keep existing base64 handling for all APIs
     if (raw.image_base64) out.image_base64 = raw.image_base64;
     else if (raw.imageBase64) out.imageBase64 = raw.imageBase64;
     else if (raw.raw_output && raw.raw_output.image_base64) out.image_base64 = raw.raw_output.image_base64;
     else if (raw.raw_output && raw.raw_output.imageBase64) out.imageBase64 = raw.raw_output.imageBase64;
- 
+
     if (out.summary && typeof out.summary === 'object') {
       try {
         out.summary = JSON.stringify(out.summary, null, 2);
@@ -142,22 +135,22 @@ const MultiAPIQueryApp = () => {
         out.summary = String(out.summary);
       }
     }
- 
+
     if (raw.type) out.output_type = raw.type;
     return out;
   };
- 
+
   const handleSubmit = async () => {
     if (!query.trim() || loading) return;
- 
+
     setLoading(true);
     setResults(null);
- 
+
     try {
       const startTime1 = performance.now();
       const startTime2 = performance.now();
       const startTime3 = performance.now();
- 
+
       const settledResults = await Promise.allSettled([
         fetch(API_ENDPOINTS.api1, {
           method: 'POST',
@@ -168,11 +161,11 @@ const MultiAPIQueryApp = () => {
           if (!r.ok) throw new Error(data?.detail || data?.error || "API error");
           return data;
         }).then(data => ({ data, time: performance.now() - startTime1 })),
- 
+
         fetch(API_ENDPOINTS.api2, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+          headers: { 
+            'Content-Type': 'application/json', 
             'ngrok-skip-browser-warning': '69420',
             'x-api-key': process.env.REACT_APP_API2_KEY
           },
@@ -182,7 +175,7 @@ const MultiAPIQueryApp = () => {
           if (!r.ok) throw new Error(data?.detail || data?.error || "API error");
           return data;
         }).then(data => ({ data, time: performance.now() - startTime2 })),
- 
+
         fetch(API_ENDPOINTS.api3, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '69420' },
@@ -193,57 +186,57 @@ const MultiAPIQueryApp = () => {
           return data;
         }).then(data => ({ data, time: performance.now() - startTime3 }))
       ]);
- 
+
       const result1 = settledResults[0].status === "fulfilled"
         ? settledResults[0].value.data
         : { output_type: "text", summary: settledResults[0].reason?.message || "API failed" };
       const time1 = settledResults[0].status === "fulfilled" ? settledResults[0].value.time : 0;
- 
+
       const result2 = settledResults[1].status === "fulfilled"
         ? settledResults[1].value.data
         : { output_type: "text", summary: settledResults[1].reason?.message || "API failed" };
       const time2 = settledResults[1].status === "fulfilled" ? settledResults[1].value.time : 0;
- 
+
       const normalizedResult2 = normalizeApi2(result2);
- 
+
       const result3 = settledResults[2].status === "fulfilled"
         ? settledResults[2].value.data
         : { output_type: "text", summary: settledResults[2].reason?.message || "API failed" };
       const time3 = settledResults[2].status === "fulfilled" ? settledResults[2].value.time : 0;
- 
+
       const relevancyResults = await Promise.allSettled([
         calculateRelevancy(query, result1),
         calculateRelevancy(query, normalizedResult2 || result2),
         calculateRelevancy(query, result3)
       ]);
- 
+
       const rel1 = relevancyResults[0].status === 'fulfilled' ? relevancyResults[0].value : 0;
       const rel2 = relevancyResults[1].status === 'fulfilled' ? relevancyResults[1].value : 0;
       const rel3 = relevancyResults[2].status === 'fulfilled' ? relevancyResults[2].value : 0;
- 
+
       setResults({
         api1: { data: result1, relevancy: rel1, fetchTime: time1, name: 'VEGA-LITE' },
         api2: { data: normalizedResult2 || result2, relevancy: rel2, fetchTime: time2, name: 'LLM BASED' },
         api3: { data: result3, relevancy: rel3, fetchTime: time3, name: 'VLM BASED' }
       });
- 
+
     } catch (error) {
       console.error('Error fetching results:', error);
     } finally {
       setLoading(false);
     }
   };
- 
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
     }
   };
- 
+
   const renderTable = (tableData, showMaximize = false) => {
   if (!tableData || !tableData.headers || !tableData.rows) return null;
- 
+  
   return (
     <div className="relative">
       {showMaximize && (
@@ -285,7 +278,7 @@ const MultiAPIQueryApp = () => {
     </div>
   );
 };
- 
+
   const VegaChart = ({ spec, containerId, onMaximize }) => {
     useEffect(() => {
       if (window.vegaEmbed && spec) {
@@ -306,7 +299,7 @@ const MultiAPIQueryApp = () => {
             title: { color: "#fbbf24", fontSize: 16, fontWeight: 600 }
           }
         };
- 
+
         window.vegaEmbed(`#${containerId}`, enhancedSpec, {
           actions: { export: true, source: false, compiled: false, editor: false },
           theme: 'dark',
@@ -314,7 +307,7 @@ const MultiAPIQueryApp = () => {
         }).catch(err => console.error('Vega embed error:', err));
       }
     }, [spec, containerId]);
- 
+
     return (
       <div className="relative w-full">
         <button
@@ -332,58 +325,42 @@ const MultiAPIQueryApp = () => {
       </div>
     );
   };
- 
+
   const renderContent = (data, apiIndex) => {
     if (!data) return <p className="text-gray-400">No content available</p>;
- 
+
     const outputType = data.output_type || 'text';
     const summary = data.summary || '';
     const vegaSpec = data.vega_spec || data.vegaSpec;
-    
-    // Keep imageBase64 for API3 and other APIs that use it
     const imageBase64 = data.image_base64 || data.imageBase64;
-    
-    // For API2: prefer image_url (direct URL), otherwise use base64
-    let imageSrc = null;
-    if (apiIndex === 2 && data.image_url) {
-      imageSrc = data.image_url.startsWith('http') ? data.image_url : `http://127.0.0.1:8000${data.image_url}`;
-    } else {
-      // For other APIs, use existing base64 logic
-      imageSrc = imageBase64
-        ? (typeof imageBase64 === 'string' && imageBase64.startsWith('data:')
-            ? imageBase64
-            : `data:image/png;base64,${imageBase64}`)
-        : null;
-    }
- 
+    const imageSrc = imageBase64
+      ? (typeof imageBase64 === 'string' && imageBase64.startsWith('data:')
+          ? imageBase64
+          : `data:image/png;base64,${imageBase64}`)
+      : null;
+
     const isApi1 = apiIndex === 1;
-    // For API2, only treat as pure markdown-table if outputType is 'markdown'
-    // (which is set when we extract a pure table). Don't mark mixed content
-    // (text + embedded tables) as markdown-table; let it render in Response box.
-    const isMarkdownTable =
-      (isApi1 && outputType === 'markdown') ||
-      (apiIndex === 2 && outputType === 'markdown');
- 
+    const isMarkdownTable = isApi1 && outputType === 'markdown';
+
     return (
       <div className="space-y-4">
-        {imageSrc && apiIndex === 2 && (
-          <div className="glass-card rounded-lg p-4 border border-blue-500/20 relative">
-            <button
-              onClick={() => setFullscreenImage(imageSrc)}
-              className="absolute top-3 right-3 z-20 bg-gray-700 hover:bg-gray-600 text-white p-2 rounded-lg transition-all shadow-md"
-              title="Maximize image"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6v12h12v-4m7-7V3m0 0h-4m4 0v4" />
-              </svg>
-            </button>
-            <h4 className="text-sm font-semibold text-blue-400 mb-2">Image Output:</h4>
-            <div className="flex justify-center">
-              <img src={imageSrc} alt="API2 output" className="max-w-full rounded-md border border-amber-500/20" />
-            </div>
-          </div>
-        )}
- 
+        {/* 🔹 API-2 IMAGE FIRST (TOP) */}
+{imageSrc && apiIndex === 2 && (
+  <div className="glass-card rounded-lg p-4 border border-blue-500/20">
+    <h4 className="text-sm font-semibold text-blue-400 mb-2 flex items-center gap-2">
+      <Sparkles className="w-4 h-4" />
+      Image Output:
+    </h4>
+    <div className="flex justify-center">
+      <img
+        src={imageSrc}
+        alt="API2 output"
+        className="max-w-full rounded-md border border-amber-500/20"
+      />
+    </div>
+  </div>
+)}
+
         {isMarkdownTable && (
           <div className="relative">
             <button
@@ -393,9 +370,9 @@ const MultiAPIQueryApp = () => {
                 const tableStartIndex = lines.findIndex(line => line.includes('|'));
                 const summaryText = lines.slice(0, tableStartIndex).join('\n').trim();
                 const tableContent = lines.slice(tableStartIndex).join('\n');
-               
-                setFullscreenTable({
-                  type: 'markdown',
+                
+                setFullscreenTable({ 
+                  type: 'markdown', 
                   content: tableContent,
                   summary: summaryText
                 });
@@ -452,10 +429,10 @@ const MultiAPIQueryApp = () => {
             </div>
           </div>
         )}
-       
+        
        {vegaSpec && vegaLoaded && (
   <div className="space-y-3">
- 
+
     {/* 🔹 GRAPH FIRST */}
     <div className="glass-card rounded-lg border border-blue-500/20 p-4">
       <h4 className="text-sm font-semibold text-blue-400 mb-3 flex items-center gap-2">
@@ -468,7 +445,7 @@ const MultiAPIQueryApp = () => {
         onMaximize={(spec) => setFullscreenSpec(spec)}
       />
     </div>
- 
+
     {/* 🔹 SUMMARY BELOW GRAPH */}
     {summary && !isMarkdownTable && (
       <div className="glass-card rounded-lg p-4 border border-amber-500/20">
@@ -479,59 +456,21 @@ const MultiAPIQueryApp = () => {
         <p className="text-gray-200 leading-relaxed text-sm">{summary}</p>
       </div>
     )}
- 
+
   </div>
 )}
- 
- 
+
+
         {!vegaSpec && !isMarkdownTable && summary && (
           <div className="glass-card rounded-lg p-4 border border-amber-500/20">
             <h4 className="text-sm font-semibold text-amber-400 mb-2 flex items-center gap-2">
               <Sparkles className="w-4 h-4" />
               Response:
             </h4>
-            {apiIndex === 2 ? (
-              <div className="text-gray-200 leading-relaxed text-sm">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    table: ({ node, ...props }) => (
-                      <table className="w-full border-collapse text-sm md:text-base" {...props} />
-                    ),
-                    thead: ({ node, ...props }) => (
-                      <thead className="sticky top-0 z-10 bg-gradient-to-r from-amber-600/40 to-blue-600/40 backdrop-blur" {...props} />
-                    ),
-                    tr: ({ node, ...props }) => (
-                      <tr className="even:bg-slate-800/40 odd:bg-slate-900/40 hover:bg-amber-500/15 transition-colors" {...props} />
-                    ),
-                    th: ({ node, ...props }) => (
-                      <th className="border border-amber-400/30 px-4 py-3 text-left font-bold uppercase tracking-wide text-amber-100 whitespace-nowrap" {...props} />
-                    ),
-                    td: ({ node, children, ...props }) => {
-                      const text = Array.isArray(children) ? children.join('') : children;
-                      const isNumber = typeof text === 'string' && !isNaN(text.replace(/[,₹â¹\s]/g, ''));
-                      return (
-                        <td
-                          className={`border border-amber-400/20 px-4 py-2 ${
-                            isNumber ? 'text-right font-mono text-blue-300' : 'text-left text-gray-200'
-                          } whitespace-nowrap`}
-                          {...props}
-                        >
-                          {children}
-                        </td>
-                      );
-                    }
-                  }}
-                >
-                  {summary}
-                </ReactMarkdown>
-              </div>
-            ) : (
-              <p className="text-gray-200 leading-relaxed text-sm whitespace-pre-wrap">{summary}</p>
-            )}
+            <p className="text-gray-200 leading-relaxed text-sm whitespace-pre-wrap">{summary}</p>
           </div>
         )}
- 
+
         {data.value !== undefined && (
           <div className="glass-card rounded-lg p-6 border border-amber-500/30 text-center gold-glow">
             <h4 className="text-sm font-semibold text-amber-400 mb-2">Value:</h4>
@@ -540,7 +479,7 @@ const MultiAPIQueryApp = () => {
             </p>
           </div>
         )}
- 
+
         {imageBase64 && Array.isArray(imageBase64) && apiIndex === 3 && (
           <div className="glass-card rounded-lg p-4 border border-blue-500/20">
             <h4 className="text-sm font-semibold text-blue-400 mb-2">Image Output:</h4>
@@ -551,7 +490,7 @@ const MultiAPIQueryApp = () => {
             </div>
           </div>
         )}
- 
+
         {data.table && (
           <div>
             <h4 className="text-sm font-semibold text-amber-400 mb-2">Table:</h4>
@@ -561,7 +500,7 @@ const MultiAPIQueryApp = () => {
       </div>
     );
   };
- 
+
   const APICard = ({ apiData, color, index }) => {
     const colorSchemes = {
       purple: {
@@ -583,9 +522,9 @@ const MultiAPIQueryApp = () => {
         headerBg: 'from-amber-600/90 to-blue-700/90'
       }
     };
- 
+
     const scheme = colorSchemes[color];
- 
+
     return (
       <div className="card-3d-luxury">
         <div className="glass-card rounded-2xl border-gold-gradient overflow-hidden">
@@ -595,7 +534,7 @@ const MultiAPIQueryApp = () => {
               {apiData.name}
             </h3>
           </div>
- 
+
           <div className="p-6 space-y-4">
             <div className="glass-card rounded-xl p-4 border border-white/10">
               <p className={`text-sm ${scheme.text} mb-2 font-semibold flex items-center gap-2`}>
@@ -604,7 +543,7 @@ const MultiAPIQueryApp = () => {
               </p>
               <p className="text-gray-200 text-sm">{query}</p>
             </div>
- 
+
             <div className="glass-card rounded-xl p-4 border border-white/10 max-h-[420px] overflow-auto luxury-scroll">
               <p className={`text-sm ${scheme.text} mb-3 font-semibold flex items-center gap-2`}>
                 <span className="w-2 h-2 rounded-full bg-blue-400"></span>
@@ -612,7 +551,7 @@ const MultiAPIQueryApp = () => {
               </p>
               {renderContent(apiData.data, index)}
             </div>
- 
+
             <div className="glass-card rounded-xl p-4 border border-amber-500/20 gold-glow">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-amber-300 font-semibold flex items-center gap-2 text-sm">
@@ -634,7 +573,7 @@ const MultiAPIQueryApp = () => {
                 />
               </div>
             </div>
- 
+
             <div className="glass-card rounded-xl p-4 border border-blue-500/20 blue-glow">
               <div className="flex items-center justify-between">
                 <span className="text-blue-300 font-semibold flex items-center gap-2 text-sm">
@@ -644,7 +583,7 @@ const MultiAPIQueryApp = () => {
                   Response Time
                 </span>
                 <span className="text-2xl font-bold text-blue-400">
-                  {apiData.fetchTime < 1000
+                  {apiData.fetchTime < 1000 
                     ? `${Math.round(apiData.fetchTime)}ms`
                     : `${(apiData.fetchTime / 1000).toFixed(2)}s`
                   }
@@ -656,14 +595,14 @@ const MultiAPIQueryApp = () => {
       </div>
     );
   };
- 
+
   return (
     <div className="min-h-screen luxury-bg noise-overlay elegant-vignette p-4 md:p-8 relative overflow-hidden">
       <div className="floating-orb orb-white"></div>
       <div className="floating-orb orb-gold"></div>
       <div className="floating-orb orb-blue"></div>
       <div className="gold-particles"></div>
- 
+
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-8 md:mb-12 sparkle-container">
           <h1 className="text-4xl md:text-6xl font-bold leading leading-[1.2]
@@ -675,7 +614,7 @@ const MultiAPIQueryApp = () => {
             Compare, visualize, and evaluate responses from multiple AI systems
           </p>
         </div>
- 
+
         <div className="mb-8 md:mb-12">
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-amber-600 via-blue-600 to-amber-600 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
@@ -711,7 +650,7 @@ const MultiAPIQueryApp = () => {
             </div>
           </div>
         </div>
- 
+
         {results && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <APICard apiData={results.api1} color="purple" index={1} />
@@ -719,7 +658,7 @@ const MultiAPIQueryApp = () => {
             <APICard apiData={results.api3} color="blue" index={3} />
           </div>
         )}
- 
+
         {fullscreenSpec && (
           <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="glass-card rounded-2xl border-gold-gradient w-full h-[90vh] flex flex-col overflow-hidden">
@@ -737,15 +676,15 @@ const MultiAPIQueryApp = () => {
                   </svg>
                 </button>
               </div>
-             
+              
              <div className="flex-1 overflow-auto p-6 bg-slate-900/50 luxury-scroll-full">
- 
+
                 <div id="fullscreen-vega" style={{ height: '100%', width: '100%' }}></div>
               </div>
             </div>
           </div>
         )}
- 
+
         {/* Fullscreen Table Modal */}
 {fullscreenTable && (
   <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4">
@@ -764,7 +703,7 @@ const MultiAPIQueryApp = () => {
           </svg>
         </button>
       </div>
-     
+      
       <div className="flex-1 overflow-auto p-8 bg-slate-900 luxury-scroll-full">
         {fullscreenTable.type === 'markdown' ? (
           <div className="space-y-6">
@@ -782,7 +721,7 @@ const MultiAPIQueryApp = () => {
                 </div>
               </div>
             )}
-           
+            
             {/* Table Section - FIXED */}
             <div className="bg-slate-800/80 rounded-xl p-6 border-2 border-blue-500/40">
               <h3 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
@@ -846,5 +785,5 @@ const MultiAPIQueryApp = () => {
     </div>
   );
 };
- 
+
 export default MultiAPIQueryApp;
